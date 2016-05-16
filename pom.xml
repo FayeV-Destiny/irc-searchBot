@@ -46,6 +46,11 @@
             <optional>true</optional>
             <version>${version.spring.boot}</version>
         </dependency>
+        <dependency>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+            <version>9.6.0-4</version>
+        </dependency>
         <!-- Tests -->
         <dependency>
             <groupId>junit</groupId>
@@ -76,11 +81,6 @@
             <artifactId>mockito-all</artifactId>
             <version>1.9.5</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.sf.saxon</groupId>
-            <artifactId>Saxon-HE</artifactId>
-            <version>9.6.0-4</version>
         </dependency>
     </dependencies>
 
