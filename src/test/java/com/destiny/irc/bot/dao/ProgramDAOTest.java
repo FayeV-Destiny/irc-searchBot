@@ -1,6 +1,7 @@
 package com.destiny.irc.bot.dao;
 
 import com.destiny.irc.bot.DaoConfiguration;
+import com.destiny.irc.bot.configuration.SearchBotConfigurationSettings;
 import com.destiny.irc.bot.response.IrcResponseLine;
 import net.sf.saxon.lib.NamespaceConstant;
 import org.hamcrest.Matchers;
@@ -8,9 +9,13 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.internal.matchers.GreaterThan;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -35,10 +40,11 @@ import static org.junit.Assert.assertThat;
 /**
  * Created by Maman et Papa on 25/04/2016.
  */
+@RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = {
         DaoConfiguration.class
 })
-public class ProgramDAOTest extends AbstractJUnit4SpringContextTests {
+public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
     private static DocumentBuilder builder;
     @Inject
     protected ProgramDAO dao;
@@ -125,21 +131,6 @@ public class ProgramDAOTest extends AbstractJUnit4SpringContextTests {
         NodeList allProgramsByName = this.dao.findAllProgramsByName("NCIS*", document);
         assertThat(allProgramsByName, is(notNullValue()));
         assertThat(allProgramsByName.getLength(), is(equalTo(6)));
-    }
-
-    @Test
-    public void name() throws Exception {
-        System.setProperty("javax.xml.xpath.XPathFactory:"+ NamespaceConstant.OBJECT_MODEL_SAXON, "net.sf.saxon.xpath.XPathFactoryImpl");
-        XPathFactory xpf = XPathFactory.newInstance(NamespaceConstant.OBJECT_MODEL_SAXON);
-
-        InputStream resourceAsStream = this.getClass().getResourceAsStream("/multipleProgramsBeginningWithSameTitle.xml");
-        Document document = builder.parse(resourceAsStream);
-        XPath xpath = xpf.newXPath();
-        XPathExpression xPathExpression = xpath.compile("/tv/programme[lower-case(title)=\"ncis\"]");
-
-        NodeList nodeList = (NodeList) xPathExpression.evaluate(document, XPathConstants.NODESET);
-        assertThat(nodeList, is(notNullValue()));
-        assertThat(nodeList.getLength(), is(greaterThan(0)));
     }
 
     @BeforeClass
