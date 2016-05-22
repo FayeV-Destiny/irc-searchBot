@@ -54,7 +54,6 @@ public class ProgramDAO {
         final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         final DocumentBuilder builder = factory.newDocumentBuilder();
 
-//        InputStream resourceAsStream = this.getClass().getResourceAsStream("/" + xmlGuideName);
         InputStream fIS = new FileInputStream(xmlGuideNameFile);
 
         return builder.parse(fIS);
@@ -69,8 +68,8 @@ public class ProgramDAO {
             throws XPathExpressionException, IOException {
         XPathFactory xPathfactory = XPathFactory.newInstance();
         XPath xpath = xPathfactory.newXPath();
-        String stdTitle = null;
-        XPathExpression expr = null;
+        String stdTitle;
+        XPathExpression expr;
         if (title.endsWith("*")) {
             String titleWithoutWildcard = title.substring(0, title.indexOf('*'));
             expr = xpath.compile(startWith(titleWithoutWildcard));
