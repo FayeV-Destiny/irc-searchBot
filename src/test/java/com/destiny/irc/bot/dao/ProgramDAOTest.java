@@ -3,28 +3,22 @@ package com.destiny.irc.bot.dao;
 import com.destiny.irc.bot.DaoConfiguration;
 import com.destiny.irc.bot.response.IrcResponseLine;
 import com.destiny.irc.bot.response.IrcResponses;
-import net.sf.saxon.lib.NamespaceConstant;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.inject.Inject;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
 import java.io.InputStream;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.destiny.irc.bot.dao.ProgramDAO.tvGuideDateTimeFmt;
 import static org.hamcrest.Matchers.greaterThan;
@@ -36,10 +30,11 @@ import static org.junit.Assert.assertThat;
 /**
  * Created by Maman et Papa on 25/04/2016.
  */
+@RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = {
         DaoConfiguration.class
 })
-public class ProgramDAOTest extends AbstractJUnit4SpringContextTests {
+public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
     private static DocumentBuilder builder;
     @Inject
     protected ProgramDAO dao;
@@ -115,7 +110,7 @@ public class ProgramDAOTest extends AbstractJUnit4SpringContextTests {
         IrcResponses responses = new IrcResponses(allProgramsByName);
         IrcResponseLine responseLine = responses.get(0);
         DateTime april27thOf2027 = tvGuideDateTimeFmt.parseDateTime("20270421211500 +0200");
-        assertThat(responseLine.getDateTime(), is(equalTo( april27thOf2027 )));
+        assertThat(responseLine.getDateTime(), is(equalTo(april27thOf2027)));
     }
 
     @Test
