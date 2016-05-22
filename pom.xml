@@ -46,14 +46,11 @@
             <optional>true</optional>
             <version>${version.spring.boot}</version>
         </dependency>
-<<<<<<< HEAD
-=======
         <dependency>
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
             <version>9.6.0-4</version>
         </dependency>
->>>>>>> devel
         <!-- Tests -->
         <dependency>
             <groupId>junit</groupId>
