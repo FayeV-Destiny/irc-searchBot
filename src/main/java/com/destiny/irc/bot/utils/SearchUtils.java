@@ -1,5 +1,11 @@
 package com.destiny.irc.bot.utils;
 
+import com.google.common.collect.Lists;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import java.util.List;
+
 /**
  * Created by Maman et Papa on 01/05/2016.
  */
@@ -45,5 +51,15 @@ public class SearchUtils {
                 }
 
         return new String(charsData);
+    }
+
+    static public List<Node> toListOfNodes(NodeList nodeList) {
+        int nbNodes = nodeList.getLength();
+        List<Node> listNodes = Lists.newArrayList();
+        for (int i = 0; i < nbNodes; i++) {
+            listNodes.add(i, nodeList.item(i));
+        }
+
+        return listNodes;
     }
 }

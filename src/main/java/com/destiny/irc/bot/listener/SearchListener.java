@@ -11,10 +11,12 @@ import org.pircbotx.hooks.ListenerAdapter;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by eric.tournier on 19/04/2016.
@@ -56,11 +58,12 @@ public class SearchListener extends ListenerAdapter {
                         Element foundProgram = this.dao.findNextScheduldedProgramsByName(messageParts[2]);
                         IrcResponseLine ircResponse = new IrcResponseLine(foundProgram);
                         event.respondChannel(ircResponse.getFormattedLine());
+                        event.respondChannel("Done !");
                     }
                     break;
 
                     case ALL_SCHEDULED: {
-                        NodeList allPrograms = this.dao.findAllProgramsByName(messageParts[2]);
+                        List<Node> allPrograms = this.dao.findAllProgramsByName(messageParts[2]);
                         IrcResponses responses = new IrcResponses(allPrograms);
                         Collections.sort(responses, new IrcResponseLineComparator());
                         for (IrcResponseLine response : responses) {
