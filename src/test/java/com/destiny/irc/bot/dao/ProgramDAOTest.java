@@ -1,34 +1,24 @@
 package com.destiny.irc.bot.dao;
 
 import com.destiny.irc.bot.DaoConfiguration;
-import com.destiny.irc.bot.configuration.SearchBotConfigurationSettings;
 import com.destiny.irc.bot.response.IrcResponseLine;
-import net.sf.saxon.lib.NamespaceConstant;
+import com.destiny.irc.bot.response.IrcResponses;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.internal.matchers.GreaterThan;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.Node;
 
 import javax.inject.Inject;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
 import java.io.InputStream;
-import java.text.Normalizer;
+import java.util.List;
 
 import static com.destiny.irc.bot.dao.ProgramDAO.tvGuideDateTimeFmt;
 import static org.hamcrest.Matchers.greaterThan;
@@ -104,8 +94,23 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
         Element nextScheduldedProgramsByName = this.dao.findNextScheduldedProgramsByName("NCIS : enquêtes spéciales", document);
         assertThat(nextScheduldedProgramsByName, is(notNullValue()));
         IrcResponseLine line = new IrcResponseLine(nextScheduldedProgramsByName);
-        DateTime april27thOf2028 = tvGuideDateTimeFmt.parseDateTime("20270421211500 +0200");
-        assertThat(line.getDateTime(), is(equalTo( april27thOf2028 )));
+        DateTime april27thOf2027 = tvGuideDateTimeFmt.parseDateTime("20270421211500 +0200");
+        assertThat(line.getDateTime(), is(equalTo(april27thOf2027)));
+    }
+
+    @Test
+    public void allFoundSchelduldedProgramsMustBeInTheFuture() throws Exception {
+        InputStream resourceAsStream = this.getClass().getResourceAsStream("/multipleProgramsWithDifferentStartDates.xml");
+        Document document = builder.parse(resourceAsStream);
+
+        List<Node> allProgramsByName = this.dao.findAllProgramsByName("NCIS", document);
+        assertThat(allProgramsByName, is(Matchers.notNullValue()));
+        assertThat(allProgramsByName.size(), is(greaterThan(0)));
+
+        IrcResponses responses = new IrcResponses(allProgramsByName);
+        IrcResponseLine responseLine = responses.get(0);
+        DateTime april27thOf2027 = tvGuideDateTimeFmt.parseDateTime("20270421211500 +0200");
+        assertThat(responseLine.getDateTime(), is(equalTo(april27thOf2027)));
     }
 
     @Test
@@ -128,9 +133,9 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
         InputStream resourceAsStream = this.getClass().getResourceAsStream("/multipleProgramsBeginningWithSameTitle.xml");
         Document document = builder.parse(resourceAsStream);
 
-        NodeList allProgramsByName = this.dao.findAllProgramsByName("NCIS*", document);
+        List<Node> allProgramsByName = this.dao.findAllProgramsByName("NCIS*", document);
         assertThat(allProgramsByName, is(notNullValue()));
-        assertThat(allProgramsByName.getLength(), is(equalTo(6)));
+        assertThat(allProgramsByName.size(), is(equalTo(6)));
     }
 
     @BeforeClass

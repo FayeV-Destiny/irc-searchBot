@@ -1,11 +1,10 @@
 package com.destiny.irc.bot.response;
 
+import com.destiny.irc.bot.utils.SearchUtils;
 import com.google.common.collect.Lists;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Text;
+import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -50,7 +49,10 @@ public class IrcResponseLineTestConfiguration {
         InputStream resourceAsStream = this.getClass().getResourceAsStream("/multipleProgramsWithSameTitle.xml");
         Document document = builder.parse(resourceAsStream);
 
-        return new IrcResponses(document.getElementsByTagName("programme"));
+        NodeList elementsByTagName = document.getElementsByTagName("programme");
+        List<Node> listOfNodes = SearchUtils.toListOfNodes(elementsByTagName);
+
+        return new IrcResponses(listOfNodes);
     }
 
     @Bean
@@ -61,6 +63,9 @@ public class IrcResponseLineTestConfiguration {
         InputStream resourceAsStream = this.getClass().getResourceAsStream("/multipleProgramsWithDifferentTitles.xml");
         Document document = builder.parse(resourceAsStream);
 
-        return new IrcResponses(document.getElementsByTagName("programme"));
+        NodeList elementsByTagName = document.getElementsByTagName("programme");
+        List<Node> listOfNodes = SearchUtils.toListOfNodes(elementsByTagName);
+
+        return new IrcResponses(listOfNodes);
     }
 }

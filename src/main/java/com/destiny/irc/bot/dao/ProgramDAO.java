@@ -1,6 +1,7 @@
 package com.destiny.irc.bot.dao;
 
 import com.destiny.irc.bot.utils.SearchUtils;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -19,7 +20,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * Created by Maman et Papa on 25/04/2016.
@@ -34,18 +37,6 @@ public class ProgramDAO {
     public static final DateTimeFormatter tvGuideDateTimeFmt = DateTimeFormat.forPattern("YYYYMMddHHmmss Z");
     private final File xmlGuideNameFile;
 
-//    private String xmlGuideName;
-
-/*
-    public ProgramDAO() {
-        this("guide.xml");
-    }
-
-    public ProgramDAO(String xmlGuideName) {
-        this.xmlGuideName = xmlGuideName;
-    }
-*/
-
     public ProgramDAO(File xmlGuideNameFile) {
         this.xmlGuideNameFile = xmlGuideNameFile;
     }
@@ -54,23 +45,22 @@ public class ProgramDAO {
         final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         final DocumentBuilder builder = factory.newDocumentBuilder();
 
-//        InputStream resourceAsStream = this.getClass().getResourceAsStream("/" + xmlGuideName);
         InputStream fIS = new FileInputStream(xmlGuideNameFile);
 
         return builder.parse(fIS);
     }
 
-    public NodeList findAllProgramsByName(String title)
+    public List<Node> findAllProgramsByName(String title)
             throws IOException, SAXException, ParserConfigurationException, XPathExpressionException {
         return this.findAllProgramsByName(this.findStandardTitleFrom(title), this.loadXmlDocument());
     }
 
-    protected NodeList findAllProgramsByName(String title, Document document)
+    protected List<Node> findAllProgramsByName(String title, Document document)
             throws XPathExpressionException, IOException {
         XPathFactory xPathfactory = XPathFactory.newInstance();
         XPath xpath = xPathfactory.newXPath();
-        String stdTitle = null;
-        XPathExpression expr = null;
+        String stdTitle;
+        XPathExpression expr;
         if (title.endsWith("*")) {
             String titleWithoutWildcard = title.substring(0, title.indexOf('*'));
             expr = xpath.compile(startWith(titleWithoutWildcard));
@@ -79,7 +69,10 @@ public class ProgramDAO {
             expr = xpath.compile(containsExactly(stdTitle));
         }
 
-        return (NodeList) expr.evaluate(document, XPathConstants.NODESET);
+        NodeList nodeList = (NodeList) expr.evaluate(document, XPathConstants.NODESET);
+        List<Node> listNodes = SearchUtils.toListOfNodes(nodeList);
+
+        return this.filterPastPrograms(listNodes);
     }
 
     private String containsExactly(String stdTitle) {
@@ -90,6 +83,14 @@ public class ProgramDAO {
         return XPATH_STARTS_WITH_TITLE_PROGRAM_BEGIN + stdTitle + XPATH_STARTS_WITH_TITLE_PROGRAM_END;
     }
 
+    protected List<Node> filterPastPrograms(List<Node> programs) {
+        List<Node> nodes = programs.stream()
+                .filter(node -> this.getStartDateFromProgram((Element) node).isAfterNow())
+                .collect(Collectors.toList());
+
+        return nodes;
+    }
+
     public Element findNextScheduldedProgramsByName(String title)
             throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         return this.findNextScheduldedProgramsByName(this.findStandardTitleFrom(title), this.loadXmlDocument());
@@ -97,17 +98,14 @@ public class ProgramDAO {
 
     protected Element findNextScheduldedProgramsByName(String title, Document document)
             throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
-        NodeList allPrograms = this.findAllProgramsByName(title, document);
-        int nbPrograms = allPrograms.getLength();
+        List<Node> allPrograms = this.findAllProgramsByName(title, document);
         DateTime startDate = null;
         Element foundProgram = null;
 
-        for (int i = 0; i < nbPrograms; i++) {
-            Node item = allPrograms.item(i);
-            if (item.getNodeType() == Node.ELEMENT_NODE) {
-                Element eElement = (Element) item;
-                String date = eElement.getAttribute("start");
-                DateTime start = tvGuideDateTimeFmt.parseDateTime(date);
+        for (Node program : allPrograms) {
+            if (program.getNodeType() == Node.ELEMENT_NODE) {
+                Element eElement = (Element) program;
+                DateTime start = this.getStartDateFromProgram(eElement);
                 if (start.isAfterNow()) {
                     if ((startDate == null)
                             || (start.isBefore(startDate))) {
@@ -119,6 +117,11 @@ public class ProgramDAO {
         }
 
         return foundProgram;
+    }
+
+    protected DateTime getStartDateFromProgram(Element eElement) {
+        String date = eElement.getAttribute("start");
+        return tvGuideDateTimeFmt.parseDateTime(date);
     }
 
     protected String findStandardTitleFrom(String messagePart) throws IOException {

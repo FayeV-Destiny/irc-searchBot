@@ -16,13 +16,12 @@ import java.util.stream.Stream;
 public class IrcResponses implements List<IrcResponseLine> {
     private List<IrcResponseLine> lines;
 
-    public IrcResponses(NodeList nodes) {
+    public IrcResponses(List<Node> nodes) {
         super();
-        lines = new ArrayList<>(nodes.getLength());
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node item = nodes.item(i);
-            if (item.getNodeType() == Node.ELEMENT_NODE) {
-                Element xmlElement = (Element) nodes.item(i);
+        lines = new ArrayList<>(nodes.size());
+        for (Node node : nodes) {
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element xmlElement = (Element) node;
                 lines.add(new IrcResponseLine(xmlElement));
             }
         }
