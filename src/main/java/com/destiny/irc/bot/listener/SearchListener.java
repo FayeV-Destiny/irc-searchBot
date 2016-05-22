@@ -39,6 +39,9 @@ public class SearchListener extends ListenerAdapter {
     public void onMessage(MessageEvent event) throws Exception {
         //This way to handle commands is useful for listeners that listen for multiple commands
         String message = event.getMessage();
+        if (!( StringUtils.startsWithIgnoreCase(message, "?")))
+            return;
+
         String[] messageParts = StringUtils.splitByWholeSeparator(message, " ", 3);
 
         switch (messageParts[0]) {
