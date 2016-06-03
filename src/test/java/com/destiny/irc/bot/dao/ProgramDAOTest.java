@@ -3,6 +3,8 @@ package com.destiny.irc.bot.dao;
 import com.destiny.irc.bot.DaoConfiguration;
 import com.destiny.irc.bot.response.IrcResponseLine;
 import com.destiny.irc.bot.response.IrcResponses;
+import net.sf.saxon.lib.NamespaceConstant;
+import net.sf.saxon.s9api.*;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.BeforeClass;
@@ -13,10 +15,16 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.inject.Inject;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
+import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 
@@ -47,7 +55,7 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
 
     @Test
     public void searchingForProgramTitlesIsCaseUnsensitive() throws Exception {
-        Element programsByName = this.dao.findNextScheduldedProgramsByName("Esprits Criminels");
+        XdmNode programsByName = this.dao.findNextScheduldedProgramsByName("Esprits Criminels");
         assertThat(programsByName, is(notNullValue()));
         programsByName = this.dao.findNextScheduldedProgramsByName("esprits criminels");
         assertThat(programsByName, is(notNullValue()));
@@ -57,7 +65,7 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
 
     @Test
     public void iCanSearchWithFrenchOrOriginalTitle() throws Exception {
-        Element programsByName = this.dao.findNextScheduldedProgramsByName("Esprits Criminels");
+        XdmNode programsByName = this.dao.findNextScheduldedProgramsByName("Esprits Criminels");
         assertThat(programsByName, is(notNullValue()));
         programsByName = this.dao.findNextScheduldedProgramsByName("CRIMINAL Minds");
         assertThat(programsByName, is(notNullValue()));
@@ -91,7 +99,7 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
         InputStream resourceAsStream = this.getClass().getResourceAsStream("/multipleProgramsWithDifferentStartDates.xml");
         Document document = builder.parse(resourceAsStream);
 
-        Element nextScheduldedProgramsByName = this.dao.findNextScheduldedProgramsByName("NCIS : enquêtes spéciales", document);
+        XdmNode nextScheduldedProgramsByName = this.dao.findNextScheduldedProgramsByName("NCIS : enquêtes spéciales", document);
         assertThat(nextScheduldedProgramsByName, is(notNullValue()));
         IrcResponseLine line = new IrcResponseLine(nextScheduldedProgramsByName);
         DateTime april27thOf2027 = tvGuideDateTimeFmt.parseDateTime("20270421211500 +0200");
@@ -103,7 +111,7 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
         InputStream resourceAsStream = this.getClass().getResourceAsStream("/multipleProgramsWithDifferentStartDates.xml");
         Document document = builder.parse(resourceAsStream);
 
-        List<Node> allProgramsByName = this.dao.findAllProgramsByName("NCIS", document);
+        List<XdmNode> allProgramsByName = this.dao.findAllProgramsByName("NCIS", document);
         assertThat(allProgramsByName, is(Matchers.notNullValue()));
         assertThat(allProgramsByName.size(), is(greaterThan(0)));
 
@@ -133,14 +141,64 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
         InputStream resourceAsStream = this.getClass().getResourceAsStream("/multipleProgramsBeginningWithSameTitle.xml");
         Document document = builder.parse(resourceAsStream);
 
-        List<Node> allProgramsByName = this.dao.findAllProgramsByName("NCIS*", document);
+        List<XdmNode> allProgramsByName = this.dao.findAllProgramsByName("NCIS*", document);
         assertThat(allProgramsByName, is(notNullValue()));
         assertThat(allProgramsByName.size(), is(equalTo(6)));
+
+        allProgramsByName = this.dao.findAllProgramsByName("ncIS*", document);
+        assertThat(allProgramsByName, is(notNullValue()));
+        assertThat(allProgramsByName.size(), is(equalTo(6)));
+
+        allProgramsByName = this.dao.findAllProgramsByName("ncis*", document);
+        assertThat(allProgramsByName, is(notNullValue()));
+        assertThat(allProgramsByName.size(), is(equalTo(6)));
+    }
+
+    @Test
+    public void test() throws Exception {
+        Processor proc = new Processor(false);
+        XPathCompiler xpath = proc.newXPathCompiler();
+        xpath.declareNamespace("saxon", "http://saxon.sf.net/"); // not actually used, just for demonstration
+
+        net.sf.saxon.s9api.DocumentBuilder builder = proc.newDocumentBuilder();
+        builder.setLineNumbering(true);
+        builder.setWhitespaceStrippingPolicy(WhitespaceStrippingPolicy.ALL);
+        XdmNode booksDoc = builder.build(new File("src/test/resources/multipleProgramsBeginningWithSameTitle.xml"));
+
+        // find all the ITEM elements, and for each one display the TITLE child
+
+        XPathSelector selector = xpath.compile("/tv/programme[starts-with(lower-case(title), lower-case(\"NCIS\"))]").load();
+        selector.setContextItem(booksDoc);
+        QName titleName = new QName("title");
+        QName attribute = new QName("start");
+        for (XdmItem xdmItem : selector) {
+            if ( !(xdmItem.isAtomicValue())) {
+                XdmNode xdmNode = (XdmNode) xdmItem;
+                String attributeValue = xdmNode.getAttributeValue(attribute);
+                XdmNode title = getChild(xdmNode, titleName);
+                System.out.println(title.getNodeName() +
+                    "(" + title.getLineNumber() + "): " +
+                    title.getStringValue() +
+                    " - Start at :"+ attributeValue);
+            }
+        }
     }
 
     @BeforeClass
     public static void setUpClassAttributes() throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         builder = factory.newDocumentBuilder();
+    }
+
+    // Helper method to get the first child of an element having a given name.
+    // If there is no child with the given name it returns null
+
+    private static XdmNode getChild(XdmNode parent, QName childName) {
+        XdmSequenceIterator iter = parent.axisIterator(Axis.CHILD, childName);
+        if (iter.hasNext()) {
+            return (XdmNode) iter.next();
+        } else {
+            return null;
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.destiny.irc.bot.dao.ProgramDAO;
 import com.destiny.irc.bot.response.IrcResponseLine;
 import com.destiny.irc.bot.response.IrcResponseLineComparator;
 import com.destiny.irc.bot.response.IrcResponses;
+import net.sf.saxon.s9api.XdmNode;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -55,7 +56,7 @@ public class SearchListener extends ListenerAdapter {
             case TV: {
                 switch (messageParts[1]) {
                     case NEXT_SCHEDULDED: {
-                        Element foundProgram = this.dao.findNextScheduldedProgramsByName(messageParts[2]);
+                        XdmNode foundProgram = this.dao.findNextScheduldedProgramsByName(messageParts[2]);
                         IrcResponseLine ircResponse = new IrcResponseLine(foundProgram);
                         event.respondChannel(ircResponse.getFormattedLine());
                         event.respondChannel("Done !");
@@ -63,7 +64,7 @@ public class SearchListener extends ListenerAdapter {
                     break;
 
                     case ALL_SCHEDULED: {
-                        List<Node> allPrograms = this.dao.findAllProgramsByName(messageParts[2]);
+                        List<XdmNode> allPrograms = this.dao.findAllProgramsByName(messageParts[2]);
                         IrcResponses responses = new IrcResponses(allPrograms);
                         Collections.sort(responses, new IrcResponseLineComparator());
                         for (IrcResponseLine response : responses) {

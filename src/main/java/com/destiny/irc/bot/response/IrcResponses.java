@@ -1,8 +1,7 @@
 package com.destiny.irc.bot.response;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.XdmNode;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -16,14 +15,11 @@ import java.util.stream.Stream;
 public class IrcResponses implements List<IrcResponseLine> {
     private List<IrcResponseLine> lines;
 
-    public IrcResponses(List<Node> nodes) {
+    public IrcResponses(List<XdmNode> nodes) {
         super();
         lines = new ArrayList<>(nodes.size());
-        for (Node node : nodes) {
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                Element xmlElement = (Element) node;
-                lines.add(new IrcResponseLine(xmlElement));
-            }
+        for (XdmNode node : nodes) {
+            lines.add(new IrcResponseLine(node));
         }
     }
 
