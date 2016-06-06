@@ -3,7 +3,6 @@ package com.destiny.irc.bot.dao;
 import com.destiny.irc.bot.DaoConfiguration;
 import com.destiny.irc.bot.response.IrcResponseLine;
 import com.destiny.irc.bot.response.IrcResponses;
-import net.sf.saxon.lib.NamespaceConstant;
 import net.sf.saxon.s9api.*;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -13,17 +12,10 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.inject.Inject;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
@@ -172,14 +164,14 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
         QName titleName = new QName("title");
         QName attribute = new QName("start");
         for (XdmItem xdmItem : selector) {
-            if ( !(xdmItem.isAtomicValue())) {
+            if (!(xdmItem.isAtomicValue())) {
                 XdmNode xdmNode = (XdmNode) xdmItem;
                 String attributeValue = xdmNode.getAttributeValue(attribute);
                 XdmNode title = getChild(xdmNode, titleName);
                 System.out.println(title.getNodeName() +
-                    "(" + title.getLineNumber() + "): " +
-                    title.getStringValue() +
-                    " - Start at :"+ attributeValue);
+                        "(" + title.getLineNumber() + "): " +
+                        title.getStringValue() +
+                        " - Start at :" + attributeValue);
             }
         }
     }
