@@ -1,10 +1,13 @@
 package com.destiny.irc.bot.response;
 
+import net.sf.saxon.s9api.Axis;
+import net.sf.saxon.s9api.QName;
+import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.XdmSequenceIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import static com.destiny.irc.bot.dao.ProgramDAO.tvGuideDateTimeFmt;
@@ -14,27 +17,33 @@ import static com.destiny.irc.bot.dao.ProgramDAO.tvGuideDateTimeFmt;
  */
 public class IrcResponseLine {
     private String fullResponse = null;
-    private Element xmlElement;
+    private XdmNode xmlNode;
     public static final DateTimeFormatter ircDateTimeFormatter = DateTimeFormat.forPattern("dd/MM/YYYY 'a' HH:mm");
     private String title;
     private DateTime dateTime;
+    private static QName TITLE_NAME = new QName("title");
+    private static QName START = new QName("start");
+    private static QName EPISODE_NUM = new QName("episode-num");
+    private static QName CHANNEL = new QName("channel");
 
-    public IrcResponseLine(Element xmlElement) {
+
+    public IrcResponseLine(XdmNode xmlNode) {
         this.fullResponse = "There was no such element.";
-        if (xmlElement != null) {
-            this.xmlElement = xmlElement;
-            this.title = this.xmlElement.getElementsByTagName("title").item(0).getTextContent();
-            String date = this.xmlElement.getAttribute("start");
+        if (xmlNode != null) {
+            this.xmlNode = xmlNode;
+            XdmNode titleNode = getChild(this.xmlNode, TITLE_NAME);
+            this.title = titleNode.getStringValue();
+            String date = this.xmlNode.getAttributeValue(START);
             this.dateTime = tvGuideDateTimeFmt.parseDateTime(date);
         }
     }
 
     public String getFormattedLine() {
-        if (this.xmlElement != null) {
-            NodeList episodeNumElement = this.xmlElement.getElementsByTagName("episode-num");
-            String channel = this.xmlElement.getAttribute("channel");
-            if (episodeNumElement.item(0) != null) {
-                String episodeNum = episodeNumElement.item(0).getTextContent();
+        if (this.xmlNode != null) {
+            XdmNode episodeNumNode = getChild(this.xmlNode, EPISODE_NUM);
+            String channel = this.xmlNode.getAttributeValue(CHANNEL);
+            if (episodeNumNode != null) {
+                String episodeNum = episodeNumNode.getStringValue();
                 String formattedEpisodeNum = this.formatEpisodeNumber(episodeNum);
                 fullResponse = title + " " + formattedEpisodeNum + " : "
                         + ircDateTimeFormatter.print(dateTime) + " sur " + channel;
@@ -65,5 +74,14 @@ public class IrcResponseLine {
 
     public DateTime getDateTime() {
         return dateTime;
+    }
+
+    private static XdmNode getChild(XdmNode parent, QName childName) {
+        XdmSequenceIterator iter = parent.axisIterator(Axis.CHILD, childName);
+        if (iter.hasNext()) {
+            return (XdmNode) iter.next();
+        } else {
+            return null;
+        }
     }
 }

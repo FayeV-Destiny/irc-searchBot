@@ -1,5 +1,6 @@
 package com.destiny.irc.bot.response;
 
+import net.sf.saxon.s9api.XdmNode;
 import org.hamcrest.core.CombinableMatcher;
 import org.hamcrest.core.Is;
 import org.hamcrest.core.IsEqual;
@@ -31,10 +32,10 @@ import static org.junit.Assert.assertThat;
 })
 public class IrcResponseLineTest extends AbstractJUnit4SpringContextTests {
     @Inject
-    Element elementWithEpisodeNb;
+    XdmNode elementWithEpisodeNb;
 
     @Inject
-    Element elementWithoutEpisodeNb;
+    XdmNode elementWithoutEpisodeNb;
 
     @Resource
     List<IrcResponseLine> ircResponseLinesWithSameTitles;

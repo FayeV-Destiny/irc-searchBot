@@ -1,6 +1,9 @@
 package com.destiny.irc.bot.utils;
 
 import com.google.common.collect.Lists;
+import net.sf.saxon.s9api.XPathSelector;
+import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.XdmNode;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -60,6 +63,15 @@ public class SearchUtils {
             listNodes.add(i, nodeList.item(i));
         }
 
+        return listNodes;
+    }
+
+    static public List<XdmNode> toListOfNodes(XPathSelector selector) {
+        List<XdmNode> listNodes = Lists.newArrayList();
+        for (XdmItem xdmItem : selector) {
+            if (!(xdmItem.isAtomicValue()))
+                listNodes.add((XdmNode) xdmItem);
+        }
         return listNodes;
     }
 }
