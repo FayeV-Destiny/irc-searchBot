@@ -3,9 +3,15 @@ package com.destiny.irc.bot.dao;
 import com.destiny.irc.bot.DaoConfiguration;
 import com.destiny.irc.bot.response.IrcResponseLine;
 import com.destiny.irc.bot.response.IrcResponses;
+import com.destiny.irc.bot.utils.SearchUtils;
+import com.omertron.thetvdbapi.TheTVDBApi;
+import com.omertron.thetvdbapi.model.Series;
 import net.sf.saxon.s9api.*;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,6 +25,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.destiny.irc.bot.dao.ProgramDAO.tvGuideDateTimeFmt;
 import static org.hamcrest.Matchers.greaterThan;
@@ -147,6 +155,15 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
     }
 
     @Test
+    public void iCanUseWildcardsToFindMultiplesProgramsBegiiningBySameSequence() throws Exception {
+        InputStream resourceAsStream = this.getClass().getResourceAsStream("/multipleProgramsWithDifferentTitles.xml");
+        Document document = builder.parse(resourceAsStream);
+
+        List<XdmNode> allProgramsByName = this.dao.findAllProgramsByName("NC*", document);
+        assertThat(allProgramsByName, is(notNullValue()));
+    }
+
+    @Test
     public void test() throws Exception {
         Processor proc = new Processor(false);
         XPathCompiler xpath = proc.newXPathCompiler();
@@ -155,7 +172,7 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
         net.sf.saxon.s9api.DocumentBuilder builder = proc.newDocumentBuilder();
         builder.setLineNumbering(true);
         builder.setWhitespaceStrippingPolicy(WhitespaceStrippingPolicy.ALL);
-        XdmNode booksDoc = builder.build(new File("src/test/resources/multipleProgramsBeginningWithSameTitle.xml"));
+        XdmNode booksDoc = builder.build(new File("src/test/resources/multipleProgramsWithDifferentTitles.xml"));
 
         // find all the ITEM elements, and for each one display the TITLE child
 
@@ -174,6 +191,14 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
                         " - Start at :" + attributeValue);
             }
         }
+
+        List<XdmNode> xdmNodes = SearchUtils.toListOfNodes(selector);
+        Map<String, List<XdmNode>> nameListMap = xdmNodes.stream()
+                .collect(
+                        Collectors.groupingBy(node -> getChild(node, titleName).getStringValue())
+                );
+
+        System.out.println(nameListMap);
     }
 
     @BeforeClass
@@ -191,6 +216,34 @@ public class ProgramDAOTest /*extends AbstractJUnit4SpringContextTests*/ {
             return (XdmNode) iter.next();
         } else {
             return null;
+        }
+    }
+
+    @Test
+    public void wiki() throws Exception {
+//        long debut = System.currentTimeMillis();
+//        String url = "https://fr.wikipedia.org/wiki/Liste_de_titres_québécois_de_séries_télévisées";
+//
+//        org.jsoup.nodes.Document doc = Jsoup.connect(url)
+//                .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0")
+//                .get();
+//        Elements table = doc.select(".wikitable");
+//        Elements trs = doc.select("table.wikitable tr");
+//        long fin = System.currentTimeMillis();
+//        System.out.println(fin - debut);
+//        //remove header row
+//        trs.remove(0);
+//        System.out.println(trs.size());
+//
+//        Element element = trs.get(0);
+//        Elements tds = element.getElementsByTag("td");
+//        Element td = tds.first();
+//        System.out.println(td.text());
+
+        TheTVDBApi tvDB = new TheTVDBApi("F13D64DC1C64C9CC");
+        List<Series> results = tvDB.searchSeries("Le bureau legendes", "fr");
+        for (Series result : results) {
+            System.out.println(result.getSeriesName());
         }
     }
 }
